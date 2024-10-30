@@ -63,7 +63,8 @@ class SocketService {
                 console.log('message received', message);
                 io.emit('event:message', JSON.parse(message));
             }
-    }
+    });
+}
 
 
     get io() {
@@ -71,4 +72,4 @@ class SocketService {
     }
 }
 
-export default new SocketService();
+export default new SocketService;
