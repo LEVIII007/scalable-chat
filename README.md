@@ -3,7 +3,7 @@ This is a monorepo containing a Node.js server for handling Redis and Kafka logi
 
 This project is a highly scalable chat application designed to handle a large number of simultaneous users and high message throughput. The architecture leverages *Redis* for Pub/Sub, *Kafka* as a message broker, and *PostgreSQL* for data persistence, ensuring efficient, real-time communication while maintaining reliability and scalability.
 
-![System Design Overview](link_to_your_image_here)
+![System Design Overview](https://github.com/LEVIII007/scalable-chat/blob/main/apps/docs/public/system_design.png)
 
 ## Table of Contents
 
