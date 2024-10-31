@@ -1,19 +1,20 @@
-import http from 'http';
-import SocketService from './services/socket';
-
+import http from "http";
+import SocketService from "./services/socket";
+import { startMessageConsumer } from "./services/kafka";
 async function init() {
-    const httpserver = http.createServer();
-    const socketService = new SocketService();
+  startMessageConsumer();
+  const socketService = new SocketService();
 
-    // Attach the HTTP server to the SocketService instance
-    socketService.io.attach(httpserver);
+  const httpServer = http.createServer();
+  const PORT = process.env.PORT ? process.env.PORT : 8000;
 
-    const PORT = process.env.PORT || 8000;
-    httpserver.listen(PORT, () => {
-        console.log(`Server is running on port ${PORT}`);
-    });
+  socketService.io.attach(httpServer);
 
-    socketService.initListeners();
+  httpServer.listen(PORT, () =>
+    console.log(`HTTP Server started at PORT:${PORT}`)
+  );
+
+  socketService.initListeners();
 }
 
 init();

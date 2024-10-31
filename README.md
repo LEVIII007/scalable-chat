@@ -1,81 +1,87 @@
-# Turborepo starter
+This is a monorepo containing a Node.js server for handling Redis and Kafka logic, and a Next.js frontend.
+# Scalable Chat Application
 
-This is an official starter Turborepo.
+This project is a highly scalable chat application designed to handle a large number of simultaneous users and high message throughput. The architecture leverages *Redis* for Pub/Sub, *Kafka* as a message broker, and *PostgreSQL* for data persistence, ensuring efficient, real-time communication while maintaining reliability and scalability.
 
-## Using this example
+![System Design Overview](link_to_your_image_here)
 
-Run the following command:
+## Table of Contents
 
-```sh
-npx create-turbo@latest
-```
+1. [Introduction](#introduction)
+2. [System Design Overview](#system-design-overview)
+3. [Components and Their Roles](#components-and-their-roles)
+4. [Why Redis and Kafka?](#why-redis-and-kafka)
+5. [Drawbacks of Not Using Redis and Kafka](#drawbacks-of-not-using-redis-and-kafka)
+6. [Setup and Installation](#setup-and-installation)
+7. [Contributing](#contributing)
 
-## What's inside?
+## Introduction
 
-This Turborepo includes the following packages/apps:
+As the user base for chat applications grows, the volume of concurrent messages can overwhelm a server, leading to poor performance and message delays. This project aims to address these issues by designing a chat system that distributes and balances the load effectively across multiple servers while maintaining real-time communication.
 
-### Apps and Packages
+## System Design Overview
 
-- `docs`: a [Next.js](https://nextjs.org/) app
-- `web`: another [Next.js](https://nextjs.org/) app
-- `@repo/ui`: a stub React component library shared by both `web` and `docs` applications
-- `@repo/eslint-config`: `eslint` configurations (includes `eslint-config-next` and `eslint-config-prettier`)
-- `@repo/typescript-config`: `tsconfig.json`s used throughout the monorepo
+The architecture follows a distributed, event-driven approach with the following key components:
 
-Each package/app is 100% [TypeScript](https://www.typescriptlang.org/).
+1. *Clients (u1, u2, u3, etc.)*: Users who send and receive messages.
+2. *Socket.IO Servers*: Servers that handle WebSocket connections, providing a real-time communication channel between clients.
+3. *Redis (Pub/Sub)*: Manages inter-server communication by broadcasting messages to other servers subscribed to the same channels.
+4. *Kafka (Aiven)*: A distributed message queue used to store messages and ensure reliable delivery to other components.
+5. *Consumer*: A service that reads messages from Kafka and processes them as required.
+6. *PostgreSQL (Aiven)*: Database for storing messages and other persistent data.
 
-### Utilities
+## Components and Their Roles
 
-This Turborepo has some additional tools already setup for you:
+- *Redis*: Acts as a fast, in-memory Pub/Sub broker between multiple Socket.IO servers. When a user sends a message, it is published to Redis, which then broadcasts it to all subscribed servers. This ensures users connected to different servers still receive messages in real-time.
 
-- [TypeScript](https://www.typescriptlang.org/) for static type checking
-- [ESLint](https://eslint.org/) for code linting
-- [Prettier](https://prettier.io) for code formatting
+- *Kafka*: Kafka serves as a reliable message broker, used to queue messages for consumption by various services. Kafka’s durability and partitioning make it ideal for handling large volumes of messages with low latency. In this architecture, messages from Redis are written to Kafka for processing, ensuring fault tolerance and message retention in case of server issues.
 
-### Build
+- *PostgreSQL*: This is the persistent layer where all messages are stored for future reference, allowing users to retrieve their chat history.
 
-To build all apps and packages, run the following command:
+### Message Flow
 
-```
-cd my-turborepo
-pnpm build
-```
+1. *Event Emit*: Users send a message through WebSocket, which is received by one of the Socket.IO servers.
+2. *Redis (Pub/Sub)*: The server that receives the message publishes it to Redis.
+3. *Other Servers*: All subscribed servers receive the message from Redis and broadcast it to their connected clients.
+4. *Kafka Queue*: Messages are also pushed to Kafka for reliable storage and consumption by downstream services.
+5. *Consumer*: Reads messages from Kafka and writes them to PostgreSQL for long-term storage.
 
-### Develop
+## Why Redis and Kafka?
 
-To develop all apps and packages, run the following command:
+### Redis
+Redis is chosen for inter-server Pub/Sub because:
+- It allows real-time message broadcasting across multiple servers.
+- It’s fast and lightweight, ideal for low-latency communication.
+- By using Redis, the application avoids sending the same message multiple times to each server, thus reducing bandwidth and CPU usage.
 
-```
-cd my-turborepo
-pnpm dev
-```
+### Kafka
+Kafka is included in this architecture for:
+- *Reliability*: Ensures that no messages are lost, even if a server goes down, by retaining messages in a queue.
+- *Scalability*: Kafka can handle a high volume of messages, distributing them across partitions.
+- *Fault Tolerance*: With message retention, Kafka enables a reliable way to recover messages after any system failure.
 
-### Remote Caching
+## Drawbacks of Not Using Redis and Kafka
 
-Turborepo can use a technique known as [Remote Caching](https://turbo.build/repo/docs/core-concepts/remote-caching) to share cache artifacts across machines, enabling you to share build caches with your team and CI/CD pipelines.
+Without Redis and Kafka, this chat application would face several challenges:
 
-By default, Turborepo will cache locally. To enable Remote Caching you will need an account with Vercel. If you don't have an account you can [create one](https://vercel.com/signup), then enter the following commands:
+### Without Redis
+- *Inconsistent Messaging*: If messages aren't broadcasted across servers, users connected to different servers might not receive messages in real-time, leading to an inconsistent user experience.
+- *High Load on a Single Server*: Without Pub/Sub, the application would have to rely on a single server to handle all messages, making it a bottleneck and reducing scalability.
 
-```
-cd my-turborepo
-npx turbo login
-```
+### Without Kafka
+- *Message Loss*: In case of server failure, messages might be lost, as they are not reliably stored in a message queue.
+- *Scalability Issues*: Handling large volumes of messages simultaneously without Kafka can overload the system.
+- *Lack of Message Persistence*: Without Kafka’s retention capabilities, there's no mechanism to reprocess or store messages effectively, impacting data integrity.
 
-This will authenticate the Turborepo CLI with your [Vercel account](https://vercel.com/docs/concepts/personal-accounts/overview).
+## Setup and Installation
 
-Next, you can link your Turborepo to your Remote Cache by running the following command from the root of your Turborepo:
+1. Clone this repository.
+2. Install Redis and Kafka.
+3. Configure Socket.IO, Redis, Kafka, and PostgreSQL based on your environment.
+4. Run the application and connect to Redis and Kafka services.
 
-```
-npx turbo link
-```
+## Contributing
 
-## Useful Links
+Contributions are welcome! Please open an issue or submit a pull request.
 
-Learn more about the power of Turborepo:
-
-- [Tasks](https://turbo.build/repo/docs/core-concepts/monorepos/running-tasks)
-- [Caching](https://turbo.build/repo/docs/core-concepts/caching)
-- [Remote Caching](https://turbo.build/repo/docs/core-concepts/remote-caching)
-- [Filtering](https://turbo.build/repo/docs/core-concepts/monorepos/filtering)
-- [Configuration Options](https://turbo.build/repo/docs/reference/configuration)
-- [CLI Usage](https://turbo.build/repo/docs/reference/command-line-reference)
+---
