@@ -13,11 +13,35 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model User {
+  id        String    @id @default(uuid())
+  username  String    @unique
+  email     String    @unique
+  password  String
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  messages  Message[]
+  groups    Group[]   @relation("UserGroups")
+  @@map("users")
+}
+
+model Group {
+  id        String    @id @default(uuid())
+  name      String
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  users     User[]    @relation("UserGroups")
+  messages  Message[]
+  @@map("groups")
+}
 
 model Message {
-  id String @id @default(uuid())
-  text String
-  createdAt DateTime @default(now()) @map("created_at")
-
+  id        String    @id @default(uuid())
+  text      String
+  createdAt DateTime  @default(now()) @map("created_at")
+  userId    String
+  groupId   String
+  user      User      @relation(fields: [userId], references: [id])
+  group     Group     @relation(fields: [groupId], references: [id])
   @@map("messages")
 }
