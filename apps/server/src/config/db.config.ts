@@ -5,3 +5,10 @@ const prisma = new PrismaClient({
 });
 
 export default prisma;
+prisma.$connect()
+  .then(() => {
+    console.log("Prisma connected successfully");
+  })
+  .catch((error) => {
+    console.error("Error connecting to Prisma:", error);
+  });

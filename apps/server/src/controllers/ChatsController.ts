@@ -9,6 +9,7 @@ class ChatsController {
         group_id: groupId,
       },
     });
+    console.log(chats);
     return res.json({ data: chats });
   }
 }

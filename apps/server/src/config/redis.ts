@@ -1,12 +1,13 @@
-import {Redis} from 'iovalkey';
-import dotenv from 'dotenv';
-dotenv.config();
-
-
-const redisHost = process.env.REDIS_URI;
-if (!redisHost) {
-    throw new Error('REDIS_HOST environment variable is not defined');
+import { Redis } from "ioredis";
+let redis: Redis;
+if (process.env.NODE_ENV === "production") {
+  redis = new Redis(process.env.REDIS_URL);
+} else {
+  redis = new Redis({
+    host: "localhost",
+    port: 6379,
+  });
 }
 
-export const pub = new Redis(redisHost);
-export const sub = new Redis(redisHost);
+
+export default redis;
