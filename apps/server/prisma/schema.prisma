@@ -12,36 +12,52 @@ datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
-
 model User {
-  id        String    @id @default(uuid())
-  username  String    @unique
-  email     String    @unique
-  password  String
-  createdAt DateTime  @default(now()) @map("created_at")
-  updatedAt DateTime  @updatedAt @map("updated_at")
-  messages  Message[]
-  groups    Group[]   @relation("UserGroups")
+  id         Int         @id @default(autoincrement())
+  name       String      @db.VarChar(191)
+  email      String      @unique
+  provider   String
+  oauth_id   String
+  image      String?
+  created_at DateTime    @default(now())
+  ChatGroup  ChatGroup[]
+
   @@map("users")
 }
 
-model Group {
-  id        String    @id @default(uuid())
-  name      String
-  createdAt DateTime  @default(now()) @map("created_at")
-  updatedAt DateTime  @updatedAt @map("updated_at")
-  users     User[]    @relation("UserGroups")
-  messages  Message[]
-  @@map("groups")
+model ChatGroup {
+  id         String       @id @default(uuid()) @db.Uuid
+  user       User         @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  user_id    Int
+  title      String       @db.VarChar(191)
+  passcode   String       @db.VarChar(20)
+  created_at DateTime     @default(now())
+  Chats      Chats[]
+  GroupUsers GroupUsers[]
+
+  @@index([user_id, created_at])
+  @@map("chat_groups")
 }
 
-model Message {
-  id        String    @id @default(uuid())
-  text      String
-  createdAt DateTime  @default(now()) @map("created_at")
-  userId    String
-  groupId   String
-  user      User      @relation(fields: [userId], references: [id])
-  group     Group     @relation(fields: [groupId], references: [id])
-  @@map("messages")
+model GroupUsers {
+  id         Int       @id @default(autoincrement())
+  group      ChatGroup @relation(fields: [group_id], references: [id], onDelete: Cascade)
+  group_id   String    @db.Uuid
+  name       String
+  created_at DateTime  @default(now())
+
+  @@map("group_users")
+}
+
+model Chats {
+  id         String    @id @default(uuid())
+  group      ChatGroup @relation(fields: [group_id], references: [id], onDelete: Cascade)
+  group_id   String    @db.Uuid
+  message    String?
+  name       String
+  file       String?
+  created_at DateTime  @default(now())
+
+  @@index([created_at])
+  @@map("chats")
 }

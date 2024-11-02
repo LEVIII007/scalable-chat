@@ -1,32 +1,27 @@
-"use client";
-import { useState } from "react";
-import { useSocket } from "../context/socketProvider";
-import classes from "./page.module.css";
-
-export default function Page() {
-  const { sendMessage, messages } = useSocket();
-  const [message, setMessage] = useState("");
-
+import Navbar from "@/components/base/Navbar";
+import HeroSection from "@/components/base/HeroSection";
+import FeatureSection from "@/components/base/FeatureSection";
+import UserReviews from "@/components/base/UserReviews";
+import Footer from "@/components/base/Footer";
+import { authOptions, CustomSession } from "./api/auth/[...nextauth]/options";
+import { getServerSession } from "next-auth";
+export default async function LandingPage() {
+  const session: CustomSession | null = await getServerSession(authOptions);
   return (
-    <div>
-      <div>
-        <input
-          onChange={(e) => setMessage(e.target.value)}
-          className={classes["chat-input"]}
-          placeholder="Message..."
-        />
-        <button
-          onClick={(e) => sendMessage(message)}
-          className={classes["button"]}
-        >
-          Send
-        </button>
-      </div>
-      <div>
-        {messages.map((e) => (
-          <li>{e}</li>
-        ))}
-      </div>
+    <div className="min-h-screen flex flex-col ">
+      {/* Header */}
+      <Navbar user={session?.user ?? null} />
+      {/* Hero Section */}
+      <HeroSection />
+
+      {/* Features Section */}
+      <FeatureSection />
+
+      {/* User Reviews Section */}
+      <UserReviews />
+
+      {/* Footer */}
+      <Footer />
     </div>
   );
 }
